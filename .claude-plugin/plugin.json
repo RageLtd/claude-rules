@@ -1,0 +1,15 @@
+{
+  "name": "claude-rules",
+  "version": "0.1.0",
+  "description": "Distributable coding standards and workflow rules for Claude Code sessions",
+  "author": {
+    "name": "rageltd"
+  },
+  "keywords": [
+    "rules",
+    "coding-standards",
+    "workflow",
+    "quality",
+    "security"
+  ]
+}
