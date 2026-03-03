@@ -15,7 +15,7 @@ On every session start, a hook symlinks all rule files from this plugin into you
 | Category | Rules |
 |----------|-------|
 | **coding** | Functional style, error handling, dependency management, constants over strings, testing, process reuse |
-| **tooling** | Bun over Node, Warp Grep, Morph fast-apply |
+| **tooling** | Bun over Node, Warp Grep, Morph fast-apply, recommended plugins |
 | **quality** | Quality standards and gates |
 | **safety** | Security constraints |
 | **workflow** | Plan-first process, task startup order |
@@ -30,6 +30,14 @@ Symlinks are recreated each session (idempotent). Your project's own rules in `.
 - **Plan-first workflow** — Present plan, get approval, then execute
 - **Bun over Node** for TS/JS projects
 - **Dependencies via package manager** — Always use `bun add`, `npm install`, etc.; never manually edit manifests
+
+## Prerequisites
+
+This plugin bundles the [Morph](https://morphllm.com) MCP server for fast file editing. Install it globally:
+
+```bash
+bun add -g @morphllm/morphmcp
+```
 
 ## Adding rules
 

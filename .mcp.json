@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "filesystem-with-morph": {
+      "command": "morph-mcp",
+      "args": []
+    }
+  }
+}
