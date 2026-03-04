@@ -23,7 +23,7 @@ rules/                        — Rule files organized by category:
 
 ## How the Sync Works
 
-`sync-rules.sh` finds all `*.md` files under the plugin's `rules/` directory, mirrors the directory structure into the target project's `.claude/rules/`, and creates symlinks (`ln -sf`). It uses `$CLAUDE_PLUGIN_ROOT` to locate itself. Project-specific rules in the target are never overwritten.
+On `SessionStart`, the hook tries `bash sync-rules.sh` first and falls back to `powershell.exe sync-rules.ps1` on Windows. Both scripts find all `*.md` files under the plugin's `rules/` directory, mirror the directory structure into the target project's `.claude/rules/`, and create symlinks. The PowerShell script falls back to copying files when symlinks aren't available (Windows without Developer Mode). Both use `$CLAUDE_PLUGIN_ROOT` to locate themselves. Project-specific rules in the target are never overwritten.
 
 ## Developing Rules
 

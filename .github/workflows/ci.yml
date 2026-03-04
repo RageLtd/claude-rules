@@ -19,10 +19,12 @@ jobs:
           echo "Checking plugin.json is valid JSON..."
           jq . .claude-plugin/plugin.json > /dev/null
 
-      - name: Validate sync script
+      - name: Validate sync scripts
         run: |
-          echo "Checking sync script syntax..."
+          echo "Checking bash sync script syntax..."
           bash -n scripts/sync-rules.sh
+          echo "Checking PowerShell sync script syntax..."
+          pwsh -Command "Get-Content scripts/sync-rules.ps1 | Out-Null; \$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw scripts/sync-rules.ps1), [ref]\$null)"
 
       - name: Check rule files exist
         run: |
@@ -32,6 +34,43 @@ jobs:
             echo "ERROR: No rule files found in rules/"
             exit 1
           fi
+
+  validate-windows:
+    name: Validate (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate plugin.json
+        run: |
+          echo "Checking plugin.json is valid JSON..."
+          Get-Content .claude-plugin/plugin.json | ConvertFrom-Json | Out-Null
+
+      - name: Validate PowerShell sync script
+        run: |
+          echo "Checking sync script syntax..."
+          $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content -Raw scripts/sync-rules.ps1), [ref]$null)
+
+      - name: Test sync script
+        run: |
+          $env:CLAUDE_PLUGIN_ROOT = $PWD.Path
+          & scripts/sync-rules.ps1
+          $linked = Get-ChildItem -Path .claude/rules -Recurse -Filter "*.md" -File
+          echo "Synced $($linked.Count) rule files"
+          if ($linked.Count -eq 0) {
+            Write-Error "ERROR: No rule files synced"
+            exit 1
+          }
+
+      - name: Check rule files exist
+        run: |
+          $count = (Get-ChildItem -Path rules -Recurse -Filter "*.md" -File).Count
+          echo "Found $count rule files"
+          if ($count -eq 0) {
+            Write-Error "ERROR: No rule files found in rules/"
+            exit 1
+          }
 
   version-preview:
     name: Version Preview

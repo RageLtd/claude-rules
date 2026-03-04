@@ -2,6 +2,16 @@
 
 A [Claude Code](https://claude.ai/code) plugin that distributes shared coding standards and workflow rules. Install it once, and every Claude Code session automatically gets your team's conventions injected as rules.
 
+## Prerequisites
+
+This plugin bundles the [Morph](https://morphllm.com) MCP server for fast file editing. Install it globally:
+
+```bash
+bun add -g @morphllm/morphmcp
+# or with npm
+npm install -g @morphllm/morphmcp
+```
+
 ## Install
 
 ```
@@ -10,7 +20,7 @@ claude plugin add claude-rules@rageltd
 
 ## How it works
 
-On every session start, a hook symlinks all rule files from this plugin into your project's `.claude/rules/` directory. Rules are organized by category:
+On every session start, a hook syncs all rule files from this plugin into your project's `.claude/rules/` directory. On macOS/Linux the hook uses bash with symlinks; on Windows it falls back to PowerShell, using symlinks if Developer Mode is enabled or copying files otherwise. Rules are organized by category:
 
 | Category | Rules |
 |----------|-------|
@@ -21,7 +31,15 @@ On every session start, a hook symlinks all rule files from this plugin into you
 | **workflow** | Plan-first process, task startup order |
 | **communication** | Output formatting and style |
 
-Symlinks are recreated each session (idempotent). Your project's own rules in `.claude/rules/` are never overwritten.
+Rules are re-synced each session (idempotent). Your project's own rules in `.claude/rules/` are never overwritten.
+
+### Platform support
+
+| Platform | Shell | Link method |
+|----------|-------|-------------|
+| macOS / Linux | bash | symlinks |
+| Windows (Developer Mode) | PowerShell | symlinks |
+| Windows (no Developer Mode) | PowerShell | file copy |
 
 ## Key conventions
 
@@ -30,14 +48,6 @@ Symlinks are recreated each session (idempotent). Your project's own rules in `.
 - **Plan-first workflow** — Present plan, get approval, then execute
 - **Bun over Node** for TS/JS projects
 - **Dependencies via package manager** — Always use `bun add`, `npm install`, etc.; never manually edit manifests
-
-## Prerequisites
-
-This plugin bundles the [Morph](https://morphllm.com) MCP server for fast file editing. Install it globally:
-
-```bash
-bun add -g @morphllm/morphmcp
-```
 
 ## Adding rules
 
