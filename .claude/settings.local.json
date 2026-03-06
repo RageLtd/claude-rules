@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "filesystem-with-morph"
+  ],
+  "enableAllProjectMcpServers": true
+}
