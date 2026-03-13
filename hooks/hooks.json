@@ -2,9 +2,13 @@
   "hooks": {
     "SessionStart": [
       {
-        "type": "command",
-        "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/sync-rules.sh\" 2>/dev/null || powershell.exe -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/scripts/sync-rules.ps1\"",
-        "timeout": 10
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/sync-rules.sh\" 2>/dev/null || powershell.exe -ExecutionPolicy Bypass -File \"${CLAUDE_PLUGIN_ROOT}/scripts/sync-rules.ps1\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }
