@@ -1,5 +1,8 @@
+---
+globs: ["*.ts", "*.tsx", "*.js", "*.jsx", "*.rs", "*.go", "*.py", "docker-compose.*", "Dockerfile"]
+---
 # Reuse Long-Lived Processes
 
-Prefer connecting to an existing process over spawning a new one. Use a "get or start" pattern: check if a service is already healthy, and only spawn if it isn't.
+Connect to an existing process instead of spawning a new one. Check if a service is already healthy before starting it ("get or start" pattern).
 
-Track ownership so only the process that spawned a service is responsible for stopping it.
+Only the process that spawned a service should stop it.

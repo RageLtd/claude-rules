@@ -1,9 +1,9 @@
 # Codebase Map
 
-When goldfish injects a codebase map at session start, prefer it over grepping/globbing for structural orientation:
+When goldfish provides a codebase map at session start, use it for structural orientation before grepping/globbing:
 
-- **Finding files**: Check the map first — it has directory summaries and file listings
+- **Finding files**: Check the map first for directory summaries and file listings
 - **Understanding structure**: Use `goldfish map:show` or `goldfish map:detail <dir>` instead of `find` or `ls -R`
-- **Searching by purpose**: Use `goldfish map:search <query>` for semantic file discovery before falling back to grep
+- **Searching by purpose**: Use `goldfish map:search <query>` before falling back to grep
 
-The map is a lightweight index (~200-400 tokens). Use grep/glob for exact string searches within files — the map is for navigating the project structure.
+If no codebase map is available, use Glob for file discovery and Grep for content search.

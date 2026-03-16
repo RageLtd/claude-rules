@@ -1,7 +1,10 @@
+---
+globs: ["*.ts", "*.tsx", "*.js", "*.jsx", "*.mts", "*.mjs", "*.rs", "*.go"]
+---
 # Error Handling
 
-Propagate errors explicitly — never catch and silence.
+Propagate errors explicitly. Do not catch and silence errors.
 
-- **TypeScript/JavaScript**: Use `{ data, error }` result objects instead of try/catch.
-- **Rust**: Use `Result<T, E>` and the `?` operator. Avoid `.unwrap()` outside of tests.
+- **TypeScript/JavaScript**: Return `{ data, error }` result objects. Do not use try/catch for control flow.
+- **Rust**: Return `Result<T, E>` and propagate with `?`. No `.unwrap()` outside of tests.
 - **Go**: Return `(val, error)` and always check `err`. No blank `_` on error returns.

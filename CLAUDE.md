@@ -32,10 +32,15 @@ On `SessionStart`, the hook tries `bash sync-rules.sh` first and falls back to `
 - New categories are just new subdirectories under `rules/`.
 - The sync script auto-discovers files by glob; no manifest of individual rules is needed.
 
-## Key Conventions Enforced by This Plugin
+## Developing Rules — Scoping
 
-- **Functional style**: No classes in TS/JS; prefer pure functions and immutable data across all languages.
-- **Error handling**: `{ data, error }` result objects in TS/JS (no try/catch); `Result<T, E>` in Rust; `(val, error)` in Go.
-- **Plan-first workflow**: Present plan, get approval, then execute. Re-plan when scope changes.
-- **Task startup order**: Memory (goldfish) → Docs (Context7) → Code (WarpGrep/grep).
-- **Bun over Node** for TS/JS projects.
+Rules can include YAML frontmatter with `globs` to limit when they load:
+
+```markdown
+---
+globs: ["*.ts", "*.tsx", "*.js", "*.jsx"]
+---
+# Rule Title
+```
+
+Only use globs for rules that are language- or file-type-specific. Workflow, safety, and communication rules should load unconditionally.
