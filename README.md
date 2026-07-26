@@ -53,11 +53,12 @@ Rules are organized by category:
 | Category | Rules |
 |----------|-------|
 | **coding** | Functional style, error handling, dependency management, constants over strings, exhaustive switch, no explicit return types, control braces (C family), testing, process reuse |
-| **tooling** | Bun over Node, Bun built-ins over packages, Warp Grep, Morph fast-apply, recommended plugins |
+| **tooling** | Bun over Node, Bun built-ins over packages, Warp Grep, Morph fast-apply |
 | **quality** | File length, quality standards and gates |
 | **safety** | Security constraints, no pipe swallowing |
 | **workflow** | Plan-first process, task startup order, codebase map, read before writing |
-| **communication** | Output formatting and style |
+
+These rules describe *how code should be written*. Deliberately absent: how the agent should talk, and which plugins you like. Response style belongs to whatever persona or system prompt is driving the session, and a rule that disagrees with it just makes the agent pick one arbitrarily. Personal tooling preferences belong in `~/.claude/rules/`, which applies across every project without being imposed on collaborators.
 
 Rules carry `paths:` frontmatter where they're language-specific, so Claude Code loads them lazily — only once a matching file enters the session. The key is `paths`, not `globs`; `globs` is silently ignored and the rule then loads in every session regardless of file type.
 

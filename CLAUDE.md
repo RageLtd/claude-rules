@@ -87,4 +87,13 @@ The key is `paths`, **not** `globs`. This was verified empirically against Claud
 
 A bare `*.ext` pattern matches nested files — `paths: ["*.ts"]` loads for `src/foo.ts`, so there is no need to write `**/*.ts`.
 
-Only use `paths` for rules that are language- or file-type-specific. Workflow, safety, and communication rules should load unconditionally.
+Only use `paths` for rules that are language- or file-type-specific. Workflow and safety rules should load unconditionally.
+
+## What Does Not Belong Here
+
+Two categories are deliberately excluded, and re-adding either will reintroduce a conflict:
+
+- **Response style** (how the agent phrases things, whether it uses bullets or prose). That belongs to the persona or system prompt driving the session. A vendored rule that disagrees with the persona means the agent picks one arbitrarily, differently each session — which is how `communication/style.md` was removed in v1.0.2, after it landed in the mimir repo instructing bullet-point summaries at a prose-only persona.
+- **Personal tooling preferences** (which plugins to enable, editor setup). Those are per-developer, not per-project, and vendoring them imposes one person's setup on every collaborator. `~/.claude/rules/` is the right home — it applies across all your projects and ships to nobody.
+
+The test is whether the rule describes *how code in this repository should be written*. If it describes how a person or an agent should behave in general, it belongs somewhere else.
