@@ -8,8 +8,13 @@
  * Commit prefixes and their version bumps:
  *   - feat!:, fix!:, BREAKING CHANGE: → major
  *   - feat: → minor
- *   - fix:, refactor:, test:, style:, perf:, ci:, build:, revert: → patch
- *   - docs:, chore: → no release (internal changes)
+ *   - fix:, refactor:, perf:, revert: → patch
+ *   - ci:, build:, test:, style:, docs:, chore: → no release
+ *
+ * The dividing line is whether a consuming repository receives anything
+ * different. Only `rules/**` and the vendoring tool ship; everything else is
+ * housekeeping, and releasing for it produces a version with an identical
+ * payload.
  */
 
 import { execSync } from "node:child_process";
@@ -74,17 +79,17 @@ const getCommitsSinceTag = (tag: string | null): Commit[] => {
 // Conventional Commit Parsing
 // ============================================================================
 
-// Types that trigger a patch release (excludes docs, chore - internal changes)
-const RELEASE_TRIGGER_TYPES = [
-  "fix",
-  "refactor",
-  "test",
-  "style",
-  "perf",
-  "ci",
-  "build",
-  "revert",
-];
+/**
+ * Types that trigger a patch release.
+ *
+ * The test is whether a consumer receives anything different. This plugin
+ * ships `rules/**` and the vendoring tool (`bin/`, `src/`) — nothing else
+ * reaches a consuming repository. So `ci`, `build`, `test`, `style`, `docs`,
+ * and `chore` are excluded: releasing for them cuts a version whose payload
+ * is byte-identical to the last one, and every repo that vendors from here
+ * then sees an update prompt for a change it cannot observe.
+ */
+const RELEASE_TRIGGER_TYPES = ["fix", "refactor", "perf", "revert"];
 
 const parseCommitMessage = (
   message: string,
