@@ -89,6 +89,23 @@ A bare `*.ext` pattern matches nested files — `paths: ["*.ts"]` loads for `src
 
 Only use `paths` for rules that are language- or file-type-specific. Workflow and safety rules should load unconditionally.
 
+## Pushing to This Repository
+
+`version-bump.yml` runs on every push to `main`. When your commits warrant a release it bumps `package.json` and `.claude-plugin/plugin.json`, commits as `chore(release): vX.Y.Z`, tags, and pushes — **to the branch you are working on**. So after any successful push, your local `main` is one commit behind within about half a minute.
+
+That means the next push is rejected as non-fast-forward. This is expected, not a fault:
+
+```bash
+git pull --rebase   # pull.rebase is on; rebase.autoStash keeps a dirty tree safe
+git push
+```
+
+Never force. The rejection is the remote telling you the bot's release commit exists, and force-pushing would delete a published version bump and orphan its tag.
+
+The release then dispatches to `RageLtd/claude-plugins`, whose workflow matches the marketplace entry with `jq select(.name == $name)` against the `client_payload[plugin_name]=claude-rules` hardcoded in `version-bump.yml`. **That name is a join key across two repositories.** Renaming the plugin means changing it in `plugin.json`, in the dispatch payload, and in the marketplace entry, together — and a half-done rename fails silently green, because the marketplace workflow ends in `git diff --cached --quiet && echo "No changes" && exit 0`.
+
+Both workflows carry a `concurrency` group. The release one has `cancel-in-progress: false` deliberately: two overlapping releases would each compute a bump from the same base tag and race to push.
+
 ## What Does Not Belong Here
 
 Two categories are deliberately excluded, and re-adding either will reintroduce a conflict:

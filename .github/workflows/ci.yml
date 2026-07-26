@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Superseded runs are worth cancelling here — unlike the release workflow,
+# nothing is published, so the newest commit is the only one worth testing.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Validate

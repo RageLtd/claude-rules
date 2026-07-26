@@ -9,6 +9,15 @@ on:
 permissions:
   contents: write
 
+# Releases must never overlap. Two pushes in quick succession would otherwise
+# start two runs that each compute a bump from the same base tag, then race to
+# commit, tag, and push — producing a duplicate version or a failed push.
+# cancel-in-progress stays false on purpose: a release cancelled midway through
+# `git push --follow-tags` is worse than one that finishes late.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   version-bump:
     name: Analyze & Bump Version
