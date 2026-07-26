@@ -24,14 +24,22 @@ On every session start, a hook syncs all rule files from this plugin into your p
 
 | Category | Rules |
 |----------|-------|
-| **coding** | Functional style, error handling, dependency management, constants over strings, testing, process reuse |
-| **tooling** | Bun over Node, Warp Grep, Morph fast-apply, recommended plugins |
-| **quality** | Quality standards and gates |
-| **safety** | Security constraints |
-| **workflow** | Plan-first process, task startup order |
+| **coding** | Functional style, error handling, dependency management, constants over strings, exhaustive switch, no explicit return types, control braces (C family), testing, process reuse |
+| **tooling** | Bun over Node, Bun built-ins over packages, Warp Grep, Morph fast-apply, recommended plugins |
+| **quality** | File length, quality standards and gates |
+| **safety** | Security constraints, no pipe swallowing |
+| **workflow** | Plan-first process, task startup order, codebase map, read before writing |
 | **communication** | Output formatting and style |
 
 Rules are re-synced each session (idempotent). Your project's own rules in `.claude/rules/` are never overwritten.
+
+### Paired enforcement
+
+Most rules ship as a `.md` file alone — prose the agent reads. Some also ship a sibling `.enforce.toml`, which turns the same rule into a deterministic detector: a regex or builtin that fires on an Edit, Write, or Bash call and surfaces the rule body at the moment of the violation, rather than hoping it stayed in context.
+
+The two files are one rule and must stay side by side — the toml's `body` field is a relative path to its markdown. The sync script links both.
+
+`.enforce.toml` files are read by [Mimir](https://github.com/RageLtd/mimir)'s rules engine, which globs `.claude/**/*.enforce.toml`. Under plain Claude Code they are inert and harmless.
 
 ### Platform support
 
@@ -54,6 +62,8 @@ Rules are re-synced each session (idempotent). Your project's own rules in `.cla
 Each rule is a standalone Markdown file in `rules/<category>/`. New categories are just new subdirectories — the sync script auto-discovers everything by glob.
 
 Rules should be terse. They're injected into Claude's context window, so brevity matters.
+
+To add deterministic enforcement, drop a `<rule-name>.enforce.toml` next to the markdown with `body = "./<rule-name>.md"` and one or more `[[conditions]]`. Keep the detector precise — a noisy rule gets ignored, which is worse than no rule.
 
 ## Development
 

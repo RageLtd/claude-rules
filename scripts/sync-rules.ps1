@@ -53,7 +53,13 @@ if (Test-Path $TargetRules) {
 }
 
 # Walk plugin rules and link/copy each file, preserving directory structure
-Get-ChildItem -Path $PluginRules -Recurse -Filter "*.md" -File | ForEach-Object {
+# `.enforce.toml` files ship alongside their `.md` bodies: Mimir's rules engine
+# globs `.claude/**/*.enforce.toml` and resolves each rule's relative `body`
+# path against the toml's own directory, so the pair must land side by side.
+# They are inert under plain Claude Code.
+Get-ChildItem -Path $PluginRules -Recurse -File | Where-Object {
+    $_.Name -like "*.md" -or $_.Name -like "*.enforce.toml"
+} | ForEach-Object {
     $rel = $_.FullName.Substring($PluginRules.Length + 1)
     $dest = Join-Path $TargetRules $rel
     $destDir = Split-Path $dest -Parent
@@ -98,6 +104,8 @@ function Get-ProjectDocs {
     return $content
 }
 
+# Collect rule prose into a single string. Markdown only — `.enforce.toml`
+# files are machine-read detector configs, not agent-facing instructions.
 function Get-CollectedRules {
     $result = [System.Text.StringBuilder]::new()
 

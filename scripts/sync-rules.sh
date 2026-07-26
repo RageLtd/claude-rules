@@ -29,8 +29,12 @@ if [[ -d "$TARGET_RULES" ]]; then
   done
 fi
 
-# Walk plugin rules and symlink each file, preserving directory structure
-find "$PLUGIN_RULES" -type f -name '*.md' | while read -r src; do
+# Walk plugin rules and symlink each file, preserving directory structure.
+# `.enforce.toml` files ship alongside their `.md` bodies: Mimir's rules engine
+# globs `.claude/**/*.enforce.toml` and resolves each rule's relative `body`
+# path against the toml's own directory, so the pair must land side by side.
+# They are inert under plain Claude Code.
+find "$PLUGIN_RULES" -type f \( -name '*.md' -o -name '*.enforce.toml' \) | while read -r src; do
   rel="${src#"$PLUGIN_RULES"/}"
   dest="${TARGET_RULES}/${rel}"
   dest_dir="$(dirname "$dest")"
@@ -67,7 +71,8 @@ read_project_docs() {
   fi
 }
 
-# Collect all rule files into a single string
+# Collect rule prose into a single string. Markdown only — `.enforce.toml`
+# files are machine-read detector configs, not agent-facing instructions.
 collect_rules() {
   find "$PLUGIN_RULES" -type f -name '*.md' | sort | while read -r src; do
     rel="${src#"$PLUGIN_RULES"/}"
