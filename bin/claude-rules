@@ -1,0 +1,125 @@
+#!/usr/bin/env bun
+/**
+ * Vendoring CLI for the claude-rules plugin.
+ *
+ * Plugins put `bin/` on the Bash tool's PATH while enabled, so this runs as a
+ * real executable rather than a skill that politely asks the model to copy
+ * files correctly. `/claude-rules:update` is a thin wrapper over `sync`.
+ *
+ *   claude-rules sync [--with-ci] [--cwd <dir>]
+ *   claude-rules check [--cwd <dir>]
+ */
+import * as path from "node:path";
+import { attempt } from "../src/attempt";
+import { check } from "../src/check";
+import { sync } from "../src/sync";
+
+const PLUGIN_ROOT = path.resolve(import.meta.dir, "..");
+
+const USAGE = `claude-rules — vendor shared rules into a repository
+
+  claude-rules sync [--with-ci]   copy rules in, write .claude/rules-lock.json
+  claude-rules check              verify vendored rules still match the lock
+
+Options:
+  --cwd <dir>   operate on <dir> instead of the current directory
+  --with-ci     also write .github/workflows/rules-check.yml (sync only)
+`;
+
+const readManifest = async () => {
+  const file = Bun.file(path.join(PLUGIN_ROOT, ".claude-plugin/plugin.json"));
+  const text = await attempt(() => file.text());
+  if (text.data === null) {
+    return { name: "claude-rules", version: "0.0.0" };
+  }
+  const parsed = await attempt(async () => JSON.parse(text.data));
+  const record: Record<string, unknown> = parsed.data ?? {};
+  return {
+    name: typeof record.name === "string" ? record.name : "claude-rules",
+    version: typeof record.version === "string" ? record.version : "0.0.0",
+  };
+};
+
+const parseArgs = (argv: string[]) => {
+  const cwdIndex = argv.indexOf("--cwd");
+  const cwd =
+    cwdIndex === -1 ? process.cwd() : path.resolve(argv[cwdIndex + 1] ?? ".");
+  return { cwd, withCi: argv.includes("--with-ci") };
+};
+
+const runSync = async (argv: string[]) => {
+  const { cwd, withCi } = parseArgs(argv);
+  const manifest = await readManifest();
+  const result = await sync(PLUGIN_ROOT, cwd, manifest.name, manifest.version, {
+    withCi,
+  });
+
+  if (result.error !== null) {
+    console.error(`sync failed: ${result.error}`);
+    return 1;
+  }
+
+  const { written, removed } = result.data;
+  console.log(
+    `synced ${written.length} files from ${manifest.name}@${manifest.version}`,
+  );
+  for (const file of removed) {
+    console.log(`  removed (retired upstream): ${file}`);
+  }
+  if (withCi) {
+    console.log("  wrote .github/workflows/rules-check.yml");
+  }
+  console.log("\nCommit .claude/rules/, .claude/rules-lock.json, and .claude/rules-check.mjs.");
+  return 0;
+};
+
+const runCheck = async (argv: string[]) => {
+  const { cwd } = parseArgs(argv);
+  const result = await check(cwd);
+
+  if (result.error !== null) {
+    console.error(`check failed: ${result.error}`);
+    return 1;
+  }
+
+  const { clean, total, source, version, missing, modified } = result.data;
+  if (clean) {
+    console.log(`check: ${total} vendored files match ${source}@${version}`);
+    return 0;
+  }
+
+  console.error("check: vendored rules do not match the lock.\n");
+  for (const file of missing) {
+    console.error(`  missing:  ${file}`);
+  }
+  for (const file of modified) {
+    console.error(`  modified: ${file}`);
+  }
+  console.error(
+    `\nThese files are vendored from ${source}. Editing them here is invisible ` +
+      "to every other repo and will be overwritten.\nEdit the rule upstream, " +
+      "release, then re-run sync. To discard local edits, re-run sync now.",
+  );
+  return 1;
+};
+
+const main = async () => {
+  const [command, ...rest] = process.argv.slice(2);
+
+  switch (command) {
+    case "sync":
+      return runSync(rest);
+    case "check":
+      return runCheck(rest);
+    case "--help":
+    case "-h":
+    case undefined:
+      console.log(USAGE);
+      return 0;
+    default:
+      console.error(`unknown command: ${command}\n\n${USAGE}`);
+      return 1;
+  }
+};
+
+process.exit(await main());

@@ -4,37 +4,51 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A Claude Code plugin (`claude-rules`) that distributes shared coding standards and workflow rules. On `SessionStart`, the hook in `hooks/hooks.json` runs `scripts/sync-rules.sh`, which symlinks all `rules/**/*.md` and `rules/**/*.enforce.toml` files into the consuming project's `.claude/rules/` directory.
+**This repository is the canonical rule set.** `rules/` is the source of truth — not a mirror of anything. Rule prose is authored here and vendored outward; if `mimir`'s `.claude/rules/` and this repo ever disagree, this repo wins and mimir gets re-synced.
 
-The rule bodies here are kept in sync with `mimir`'s `.claude/rules/` — that repo is the source of truth for shared rule prose. When a rule changes there, mirror it here rather than editing in place and letting the two drift.
+Around that content sits a Claude Code plugin whose only job is vendoring: `bin/claude-rules` copies the rules into a consuming repo as real committed files, records a digest of each in a lock, and emits a dependency-free checker that fails CI when a copy diverges.
+
+There is no `SessionStart` hook and nothing is symlinked. Propagation is explicit — a repo receives rule changes when someone runs `/claude-rules:update` in it, not silently at session start.
 
 ## Architecture
 
 ```
 .claude-plugin/plugin.json   — Plugin manifest (name, version, metadata)
-hooks/hooks.json              — SessionStart hook definition
-scripts/sync-rules.sh         — Idempotent symlink script (runs each session)
-rules/                        — Rule files organized by category:
-  coding/                     — Language conventions (functional style, error handling, etc.)
-  tooling/                    — Tool preferences (Bun, warp-grep, Morph fast-apply)
-  quality/                    — Quality gates (TDD, security review, test coverage)
-  safety/                     — Security constraints
-  workflow/                   — Task startup order, plan-first process, stop conditions
-  communication/              — Output formatting standards
+bin/claude-rules             — The vendoring CLI (on PATH while the plugin is enabled)
+commands/update.md           — /claude-rules:update, a thin wrapper over `sync`
+src/
+  constants.ts               — Paths written into a consuming repo
+  attempt.ts                 — The ONLY place allowed to catch; converts throws to results
+  lock.ts                    — Digests, lock schema, validation
+  sync.ts                    — Vendor + prune
+  check.ts                   — Verify (mirrors the emitted checker)
+  templates.ts               — Source of the emitted checker and CI workflow
+rules/                       — The canonical rule set, by category
 ```
 
-## How the Sync Works
+## What Sync Writes
 
-On `SessionStart`, the hook tries `bash sync-rules.sh` first and falls back to `powershell.exe sync-rules.ps1` on Windows. Both scripts find all `*.md` and `*.enforce.toml` files under the plugin's `rules/` directory, mirror the directory structure into the target project's `.claude/rules/`, and create symlinks. The PowerShell script falls back to copying files when symlinks aren't available (Windows without Developer Mode). Both use `$CLAUDE_PLUGIN_ROOT` to locate themselves. Project-specific rules in the target are never overwritten.
+Into the consuming repo, all committed:
 
-The generated `AGENTS.md` concatenates `*.md` only — `.enforce.toml` files are machine-read detector configs, not agent-facing prose.
+- `.claude/rules/**` — real files, both `*.md` and `*.enforce.toml`
+- `.claude/rules-lock.json` — `{ lockVersion, source, version, files: { path: "sha256-…" } }`
+- `.claude/rules-check.mjs` — plain Node, no deps, no network
+- `.github/workflows/rules-check.yml` — only with `--with-ci`
+
+Two invariants worth preserving if you touch `sync.ts`:
+
+1. **Pruning is lock-driven, never directory-driven.** Only files the previous lock says we wrote, and which no longer exist upstream, get removed. This is what lets a repo keep its own rules in `.claude/rules/` alongside the vendored set.
+2. **The lock carries no timestamp.** A generated-at field would make every sync produce a diff whether or not anything changed, which defeats the point.
+
+Digests normalise CRLF to LF before hashing. Without that, a Windows checkout with `core.autocrlf=true` breaks every digest without anyone editing anything — there's a CI job pinning this.
 
 ## Developing Rules
 
 - Each rule is a standalone Markdown file in `rules/<category>/`.
 - Rules should be terse — a heading and a few bullets or sentences. They're injected into Claude's context, so brevity matters.
 - New categories are just new subdirectories under `rules/`.
-- The sync script auto-discovers files by glob; no manifest of individual rules is needed.
+- `sync` auto-discovers files by glob; no manifest of individual rules is needed.
+- Run `bun test` after touching anything under `src/`. The suite covers the four behaviours that matter: clean vendor, tamper detection, upstream-deletion pruning, and repo-local rules surviving both commands.
 
 ## Developing Rules — Paired Enforcement
 
