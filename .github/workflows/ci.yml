@@ -61,23 +61,28 @@ jobs:
         with:
           bun-version: latest
 
+      # bash, not pwsh: GitHub's pwsh shell exits the step with $LASTEXITCODE,
+      # so a step that deliberately runs a failing command inherits its code
+      # and fails even when the assertion around it passed.
       - name: Sync into a scratch repo
+        shell: bash
         run: |
-          New-Item -ItemType Directory -Path scratch | Out-Null
+          mkdir -p scratch
           bun bin/claude-rules sync --cwd scratch
 
       - name: Verify with the emitted Node checker
+        shell: bash
         run: node scratch/.claude/rules-check.mjs
 
       - name: Verify tampering is still caught
+        shell: bash
         run: |
-          Add-Content -Path scratch/.claude/rules/coding/testing.md -Value "tampered"
-          node scratch/.claude/rules-check.mjs
-          if ($LASTEXITCODE -eq 0) {
-            Write-Error "checker passed on tampered content"
+          echo "tampered" >> scratch/.claude/rules/coding/testing.md
+          if node scratch/.claude/rules-check.mjs; then
+            echo "ERROR: checker passed on tampered content"
             exit 1
-          }
-          Write-Output "tampering correctly detected"
+          fi
+          echo "tampering correctly detected"
 
   version-preview:
     name: Version Preview
