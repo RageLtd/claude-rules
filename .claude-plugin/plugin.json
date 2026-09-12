@@ -1,6 +1,6 @@
 {
   "name": "claude-rules",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Distributable coding standards and workflow rules for Claude Code sessions",
   "author": {
     "name": "rageltd"

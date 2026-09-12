@@ -1,6 +1,6 @@
 {
 	"name": "claude-rules",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"private": true,
 	"scripts": {
 		"release": "bun scripts/release.ts",
