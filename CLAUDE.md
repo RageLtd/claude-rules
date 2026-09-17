@@ -58,6 +58,7 @@ A rule may ship a sibling `<name>.enforce.toml` that turns it into a determinist
 id = "coding/example"
 body = "./example.md"          # relative to this toml's own directory
 enabled = true
+severity = "block"              # block (default) | nudge
 event = "file"                  # file | bash | stop | prompt | all
 exclude_globs = ["*.test.*"]
 message = "Short violation message; ${line} and ${match} interpolate."
@@ -71,6 +72,8 @@ pattern = '''…'''
 Because `body` resolves against the toml's directory, the pair must always sync together into the same folder. Conditions are ANDed; `[[negative_conditions]]` suppress a match. `detector = "builtin:<name>"` swaps the regex for a builtin (e.g. `builtin:file-length`).
 
 Precision matters more than coverage — a detector that fires on legitimate code trains the reader to ignore it.
+
+`severity` decides what a finding does. Mimir's engine **blocks by default**: the tool call is denied with the findings as the reason. A rule whose detector is a heuristic with known false positives (a `class` regex, a return-type shape) sets `severity = "nudge"` so the finding is advice attached to the call instead of a deny — because under autonomous workers a false-positive block wedges the agent. Safety rules stay blocking. Detector regressions live in `src/rules.test.ts`; add a case there for every false positive you fix.
 
 ## Developing Rules — Scoping
 
