@@ -91,6 +91,7 @@ describe("severity pins", () => {
     "coding/functional-style.enforce.toml",
     "coding/return-types.enforce.toml",
     "coding/control-braces.enforce.toml",
+    "coding/error-handling.enforce.toml",
   ])("%s advises rather than blocks", async (relative) => {
     expect((await loadRule(relative)).severity).toBe("nudge");
   });

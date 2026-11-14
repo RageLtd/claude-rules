@@ -1,6 +1,10 @@
 id = "coding/error-handling"
 body = "./error-handling.md"
 enabled = true
+# A bare `try {` cannot tell control flow from the one adapter that turns a
+# throwing API (bun:sqlite, JSON.parse) into a result object, and that adapter
+# is what the rule asks for — advise rather than block.
+severity = "nudge"
 event = "file"
 exclude_globs = ["*.d.ts", "*.test.*", "*.spec.*"]
 
